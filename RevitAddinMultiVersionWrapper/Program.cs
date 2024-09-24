@@ -1,4 +1,6 @@
-﻿namespace RevitAddinMultiVersionWrapper;
+﻿using AppDomainToolkit;
+
+namespace RevitAddinMultiVersionWrapper;
 
 using System.Reflection;
 using Autodesk.Revit.UI;
@@ -24,9 +26,13 @@ class App : IExternalApplication
         DecompressDll(assembly, version, TempFilePath);
         
         _dllAppDomain = AppDomain.CreateDomain("RevitAddinMultiVersion");
-        var assemblyName = AssemblyName.GetAssemblyName(TempFilePath);
+
+        using (var context = AppDomainContext.Create())
+        {
+            context.LoadAssembly(LoadMethod.LoadFile, TempFilePath);
+        }
         
-        _dllAppDomain.Load(TempFilePath);
+        var assemblyName = AssemblyName.GetAssemblyName(TempFilePath);
         
         _dllInstance = _dllAppDomain.CreateInstanceAndUnwrap(TempFilePath, RevitAppClass);
         if (_dllInstance == null)
