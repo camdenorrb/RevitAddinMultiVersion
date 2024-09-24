@@ -26,7 +26,7 @@ class App : IExternalApplication
         _dllAppDomain = AppDomain.CreateDomain("RevitAddinMultiVersion");
         var assemblyName = AssemblyName.GetAssemblyName(TempFilePath);
         
-        _dllAppDomain.Load(assemblyName);
+        _dllAppDomain.Load(TempFilePath);
         
         _dllInstance = _dllAppDomain.CreateInstanceAndUnwrap(TempFilePath, RevitAppClass);
         if (_dllInstance == null)
