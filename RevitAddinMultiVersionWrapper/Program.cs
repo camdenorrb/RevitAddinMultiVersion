@@ -4,14 +4,12 @@ using System.Reflection;
 using Autodesk.Revit.UI;
 using ZstdSharp;
 
-[Serializable]
-class App : MarshalByRefObject, IExternalApplication
+class App : IExternalApplication
 {
 
     private const string RevitAppClass = "RevitAddinMultiVersion.App";
     private const string DefaultVersion = "R25";
     
-    //private AppDomain? _dllAppDomain;
     private IExternalApplication? _dllInstance;
     
     private static readonly string TempFilePath = Path.Combine(Path.GetTempPath(), "RevitAddinMultiVersion.dll");
@@ -36,34 +34,6 @@ class App : MarshalByRefObject, IExternalApplication
             TaskDialog.Show("Error", $"DLL not found at {TempFilePath}");
             return Result.Failed;
         }
-
-        var currentSetup = AppDomain.CurrentDomain.SetupInformation;
-
-        var appDomainSetup = new AppDomainSetup
-        {
-            ApplicationBase = currentSetup.ApplicationBase,
-            PrivateBinPath = currentSetup.PrivateBinPath,
-            ConfigurationFile = currentSetup.ConfigurationFile
-        };
-        
-        //_dllAppDomain = AppDomain.CreateDomain("RevitAddinMultiVersion", null, appDomainSetup);
-        //_dllAppDomain.AssemblyResolve += DllAppDomain_AssemblyResolve;
-
-        /*
-        var assemblyName = AssemblyName.GetAssemblyName(TempFilePath).FullName;
-
-        try
-        {
-            _dllInstance = _dllAppDomain.CreateInstanceAndUnwrap(
-                assemblyName,
-                RevitAppClass
-            ) as IExternalApplication;
-        }
-        catch (Exception ex)
-        {
-            TaskDialog.Show("CreateInstance Error", ex.ToString());
-            return Result.Failed;
-        }*/
         
         _dllInstance = Assembly.LoadFrom(TempFilePath)
             .CreateInstance(RevitAppClass) as IExternalApplication;
@@ -90,17 +60,12 @@ class App : MarshalByRefObject, IExternalApplication
     public Result OnShutdown(UIControlledApplication application)
     {
         _dllInstance?.OnShutdown(application);
-
-        /*
-       if (_dllAppDomain != null)
-       {
-           AppDomain.Unload(_dllAppDomain);
-       }*/
         
+        /*
        if (File.Exists(TempFilePath))
        {
            File.Delete(TempFilePath);
-       }
+       }*/
 
        return Result.Succeeded;
     }

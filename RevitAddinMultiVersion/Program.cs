@@ -2,7 +2,6 @@
 
 using Autodesk.Revit.UI;
 
-[Serializable]
 class App : IExternalApplication
 {
     public Result OnStartup(UIControlledApplication application)
