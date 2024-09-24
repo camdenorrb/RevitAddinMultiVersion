@@ -35,13 +35,8 @@ class App : IExternalApplication
             TaskDialog.Show("Error", $"DLL not found at {TempFilePath}");
             return Result.Failed;
         }
-
-        var appDomainSetup = new AppDomainSetup
-        {
-            ApplicationBase = Path.GetDirectoryName(TempFilePath),
-        };
-
-        _dllAppDomain = AppDomain.CreateDomain("RevitAddinMultiVersion", null, appDomainSetup);
+        
+        _dllAppDomain = AppDomain.CreateDomain("RevitAddinMultiVersion");
         _dllAppDomain.AssemblyResolve += DllAppDomain_AssemblyResolve;
 
         var assemblyName = AssemblyName.GetAssemblyName(TempFilePath).FullName;
@@ -166,6 +161,19 @@ class App : IExternalApplication
                 return assembly;
             }
         }
+        
+        var assemblyName = new AssemblyName(args.Name).Name + ".dll";
+
+        var tempAssemblyPath = Path.Combine(
+            Path.GetDirectoryName(TempFilePath) ?? string.Empty,
+            assemblyName);
+        
+        if (File.Exists(tempAssemblyPath))
+        {
+            return Assembly.LoadFrom(tempAssemblyPath);
+        }
+        
+        
 
         return null;
     }
