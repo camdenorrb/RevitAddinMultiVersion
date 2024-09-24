@@ -22,7 +22,7 @@ zstd -f -19 -T0 -v bin/Any\ CPU/Debug\ R21/net48/RevitAddinMultiVersion.dll -o b
 zstd -f -19 -T0 -v bin/Any\ CPU/Debug\ R22/net48/RevitAddinMultiVersion.dll -o bin/RevitAddinMultiVersionR22.zstd
 zstd -f -19 -T0 -v bin/Any\ CPU/Debug\ R23/net48/RevitAddinMultiVersion.dll -o bin/RevitAddinMultiVersionR23.zstd
 zstd -f -19 -T0 -v bin/Any\ CPU/Debug\ R24/net48/RevitAddinMultiVersion.dll -o bin/RevitAddinMultiVersionR24.zstd
-zstd -f -19 -T0 -v bin/Any\ CPU/Debug\ R25/net80/RevitAddinMultiVersion.dll -o bin/RevitAddinMultiVersionR25.zstd
+zstd -f -19 -T0 -v bin/Any\ CPU/Debug\ R25/net8.0/RevitAddinMultiVersion.dll -o bin/RevitAddinMultiVersionR25.zstd
 
 
 #
@@ -39,7 +39,7 @@ zstd -f -19 -T0 -v bin/Any\ CPU/Debug\ R25/net80/RevitAddinMultiVersion.dll -o b
 #    bin/Any\ CPU/Debug\ R22/net48/RevitAddinMultiVersion.dll \
 #    bin/Any\ CPU/Debug\ R23/net48/RevitAddinMultiVersion.dll \
 #    bin/Any\ CPU/Debug\ R24/net48/RevitAddinMultiVersion.dll \
-#    bin/Any\ CPU/Debug\ R25/net80/RevitAddinMultiVersion.dll \
+#    bin/Any\ CPU/Debug\ R25/net8.0/RevitAddinMultiVersion.dll \
 #    /lib:bin/Any\ CPU/Debug\ R14/net40 \
 #    /lib:bin/Any\ CPU/Debug\ R15/net45 \
 #    /lib:bin/Any\ CPU/Debug\ R16/net451 \
@@ -51,6 +51,6 @@ zstd -f -19 -T0 -v bin/Any\ CPU/Debug\ R25/net80/RevitAddinMultiVersion.dll -o b
 #    /lib:bin/Any\ CPU/Debug\ R22/net48 \
 #    /lib:bin/Any\ CPU/Debug\ R23/net48 \
 #    /lib:bin/Any\ CPU/Debug\ R24/net48 \
-#    /lib:bin/Any\ CPU/Debug\ R25/net80 \
+#    /lib:bin/Any\ CPU/Debug\ R25/net8.0 \
 #    /internalize
 
