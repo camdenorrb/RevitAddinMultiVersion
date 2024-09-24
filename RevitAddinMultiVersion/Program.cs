@@ -41,7 +41,7 @@ class App : IExternalApplication
         #elif REVIT2024
                 return "R24";
         #elif REVIT2025
-                return "R24";
+                return "R25";
         #else
                 return "Unknown version";
         #endif
