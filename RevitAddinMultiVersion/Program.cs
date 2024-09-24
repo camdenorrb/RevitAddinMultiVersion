@@ -6,7 +6,7 @@ class App : IExternalApplication
 {
     public Result OnStartup(UIControlledApplication application)
     {
-        TaskDialog.Show("Remember, I'm always watching >:3", "MultiVersion:" + getVersion());
+        TaskDialog.Show("Remember, I'm always watching >:3", "MultiVersion:" + GetVersion());
         return Result.Succeeded;
     }
 
@@ -16,7 +16,7 @@ class App : IExternalApplication
     }
 
 
-    public string getVersion()
+    private static string GetVersion()
     {
         #if REVIT2014
                 return "R14";

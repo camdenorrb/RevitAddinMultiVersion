@@ -11,14 +11,15 @@ class App : IExternalApplication
     private const string DefaultVersion = "R25";
     
     private IExternalApplication? _dllInstance;
-    
-    private static readonly string TempFilePath = Path.Combine(Path.GetTempPath(), "RevitAddinMultiVersion.dll");
+
+    private string? TempFilePath;
     
     public Result OnStartup(UIControlledApplication application)
     {
         var assembly = Assembly.GetExecutingAssembly();
         var version = DllVersion(application);
 
+        TempFilePath = Path.Combine(Path.GetTempPath(), $"RevitAddinMultiVersion{version}.dll");
         try
         {
             DecompressDll(assembly, version, TempFilePath);
