@@ -5,14 +5,14 @@ using Autodesk.Revit.UI;
 using ZstdSharp;
 
 [Serializable]
-class App : IExternalApplication
+class App : MarshalByRefObject, IExternalApplication
 {
 
     private const string RevitAppClass = "RevitAddinMultiVersion.App";
     private const string DefaultVersion = "R25";
     
     private AppDomain? _dllAppDomain;
-    private object? _dllInstance;
+    private IExternalApplication? _dllInstance;
     
     private static readonly string TempFilePath = Path.Combine(Path.GetTempPath(), "RevitAddinMultiVersion.dll");
     
@@ -36,8 +36,17 @@ class App : IExternalApplication
             TaskDialog.Show("Error", $"DLL not found at {TempFilePath}");
             return Result.Failed;
         }
+
+        var currentSetup = AppDomain.CurrentDomain.SetupInformation;
+
+        var appDomainSetup = new AppDomainSetup
+        {
+            ApplicationBase = currentSetup.ApplicationBase,
+            PrivateBinPath = currentSetup.PrivateBinPath,
+            ConfigurationFile = currentSetup.ConfigurationFile
+        };
         
-        _dllAppDomain = AppDomain.CreateDomain("RevitAddinMultiVersion");
+        _dllAppDomain = AppDomain.CreateDomain("RevitAddinMultiVersion", null, appDomainSetup);
         _dllAppDomain.AssemblyResolve += DllAppDomain_AssemblyResolve;
 
         var assemblyName = AssemblyName.GetAssemblyName(TempFilePath).FullName;
@@ -47,7 +56,7 @@ class App : IExternalApplication
             _dllInstance = _dllAppDomain.CreateInstanceAndUnwrap(
                 assemblyName,
                 RevitAppClass
-            );
+            ) as IExternalApplication;
         }
         catch (Exception ex)
         {
@@ -63,7 +72,7 @@ class App : IExternalApplication
 
         try
         {
-            DllCallOnStartup(_dllInstance, application);
+            _dllInstance.OnStartup(application);
         }
         catch (Exception ex)
         {
@@ -76,12 +85,8 @@ class App : IExternalApplication
     
     public Result OnShutdown(UIControlledApplication application)
     {
-        
-       if (_dllInstance != null)
-       {
-           DllCallOnShutdown(_dllInstance, application);
-       }
-       
+        _dllInstance?.OnShutdown(application);
+
        if (_dllAppDomain != null)
        {
            AppDomain.Unload(_dllAppDomain);
@@ -127,55 +132,43 @@ class App : IExternalApplication
         }
     }
     
-    private void DllCallOnStartup(object instance, UIControlledApplication application)
+    private Assembly DllAppDomain_AssemblyResolve(object sender, ResolveEventArgs args)
     {
-        var type = instance.GetType();
-        
-        var onStartupMethod = type.GetMethod("OnStartup");
-        if (onStartupMethod != null)
+        // First, check if the assembly is already loaded in the default AppDomain
+        var loadedAssembly = AppDomain.CurrentDomain.GetAssemblies()
+            .FirstOrDefault(a => a.FullName == args.Name);
+
+        if (loadedAssembly != null)
         {
-            onStartupMethod.Invoke(instance, [application]);
+            // Load the assembly bytes into the new AppDomain
+            var assemblyPath = loadedAssembly.Location;
+            return Assembly.LoadFrom(assemblyPath);
         }
-    }
-    
-    private void DllCallOnShutdown(object instance, UIControlledApplication application)
-    {
-        var type = instance.GetType();
-        
-        var onShutdownMethod = type.GetMethod("OnShutdown");
-        if (onShutdownMethod != null)
-        {
-            onShutdownMethod.Invoke(instance, [application]);
-        }
-    }
-    
-    private Assembly? DllAppDomain_AssemblyResolve(object sender, ResolveEventArgs args)
-    {
-        // Check if the requested assembly is RevitAPI or RevitAPIUI
-        if (args.Name.StartsWith("RevitAPI"))
-        {
-            // Load the assembly from the default AppDomain
-            var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(a => a.FullName == args.Name);
-            if (assembly != null)
-            {
-                return assembly;
-            }
-        }
-        
+
+        // Attempt to load the assembly from Revit's installation directory
         var assemblyName = new AssemblyName(args.Name).Name + ".dll";
 
-        var tempAssemblyPath = Path.Combine(
-            Path.GetDirectoryName(TempFilePath) ?? string.Empty,
+        // Attempt to load the assembly from the add-in's directory
+        var addinAssemblyPath = Path.Combine(
+            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
             assemblyName);
-        
+
+        if (File.Exists(addinAssemblyPath))
+        {
+            return Assembly.LoadFrom(addinAssemblyPath);
+        }
+
+        // Attempt to load the assembly from the temporary directory where the decompressed DLL is
+        var tempAssemblyPath = Path.Combine(
+            Path.GetDirectoryName(TempFilePath),
+            assemblyName);
+
         if (File.Exists(tempAssemblyPath))
         {
             return Assembly.LoadFrom(tempAssemblyPath);
         }
-        
-        
 
+        // If the assembly cannot be found, return null
         return null;
     }
     
