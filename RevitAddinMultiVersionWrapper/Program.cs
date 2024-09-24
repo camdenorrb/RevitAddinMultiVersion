@@ -6,83 +6,112 @@ using ZstdSharp;
 
 class App : IExternalApplication
 {
-    
+
+    private const string RevitAppClass = "RevitAddinMultiVersion.App";
     private const string DefaultVersion = "R25";
-    private static readonly string TempFilePath = Path.GetTempPath();
+    
+    private AppDomain? _dllAppDomain;
+    private object? _dllInstance;
+    
+    private static readonly string TempFilePath = Path.Combine(Path.GetTempPath(), "RevitAddinMultiVersion.dll");
     
     public Result OnStartup(UIControlledApplication application)
     {
 
         var assembly = Assembly.GetExecutingAssembly();
+        var version = dllVersion(application);
         
-        switch (application.ControlledApplication.VersionNumber)
+        DecompressDll(assembly, version, TempFilePath);
+        
+        _dllAppDomain = AppDomain.CreateDomain("RevitAddinMultiVersion");
+        var assemblyName = AssemblyName.GetAssemblyName(TempFilePath);
+        
+        _dllAppDomain.Load(assemblyName);
+        
+        _dllInstance = _dllAppDomain.CreateInstanceAndUnwrap(assemblyName.FullName, RevitAppClass);
+        if (_dllInstance == null)
         {
-            case "2014":
-                LoadDll(assembly, "R14", TempFilePath);
-                break;
-            case "2015":
-                LoadDll(assembly, "R15", TempFilePath);
-                break;
-            case "2016":
-                LoadDll(assembly, "R16", TempFilePath);
-                break;
-            case "2017":
-                LoadDll(assembly, "R17", TempFilePath);
-                break;
-            case "2018":
-                LoadDll(assembly, "R18", TempFilePath);
-                break;
-            case "2019":
-                LoadDll(assembly, "R19", TempFilePath);
-                break;
-            case "2020":
-                LoadDll(assembly, "R20", TempFilePath);
-                break;
-            case "2021":
-                LoadDll(assembly, "R21", TempFilePath);
-                break;
-            case "2022":
-                LoadDll(assembly, "R22", TempFilePath);
-                break;
-            case "2023":
-                LoadDll(assembly, "R23", TempFilePath);
-                break;
-            case "2024":
-                LoadDll(assembly, "R24", TempFilePath);
-                break;
-            case "2025":
-                LoadDll(assembly, "R25", TempFilePath);
-                break;
-            default:
-                LoadDll(assembly, DefaultVersion, TempFilePath);
-                break;
+            return Result.Failed;
         }
-    
+        
+        DllCallOnStartup(_dllInstance, application);
+        
         return Result.Succeeded;
     }
 
     public Result OnShutdown(UIControlledApplication application)
     {
-        if (File.Exists(TempFilePath))
-        {
-            File.Delete(TempFilePath);
-        }
+        
+       if (_dllInstance != null)
+       {
+           DllCallOnShutdown(_dllInstance, application);
+       }
+       
+       if (_dllAppDomain != null)
+       {
+           AppDomain.Unload(_dllAppDomain);
+       }
+        
+       if (File.Exists(TempFilePath))
+       {
+           File.Delete(TempFilePath);
+       }
 
-        return Result.Succeeded;
+       return Result.Succeeded;
     }
 
-    private void LoadDll(Assembly assembly, string version, string tempFilePath)
+    public string dllVersion(UIControlledApplication application)
     {
-        
+        return application.ControlledApplication.VersionNumber switch
+        {
+            "2014" => "R14",
+            "2015" => "R15",
+            "2016" => "R16",
+            "2017" => "R17",
+            "2018" => "R18",
+            "2019" => "R19",
+            "2020" => "R20",
+            "2021" => "R21",
+            "2022" => "R22",
+            "2023" => "R23",
+            "2024" => "R24",
+            "2025" => "R25",
+            _ => DefaultVersion
+        };
+    }
+    
+    private void DecompressDll(Assembly assembly, string version, string tempFilePath)
+    {
         var dllName = $"RevitAddinMultiVersion{version}.zstd";
 
-        using var stream = assembly.GetManifestResourceStream("RevitAddinMultiVersionWrapper.Resources." + dllName);
-        using var decompressorStream = new DecompressionStream(stream);
+        using (var stream = assembly.GetManifestResourceStream($"RevitAddinMultiVersionWrapper.Resources.{dllName}"))
+        using (var decompressorStream = new DecompressionStream(stream))
         using (var fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write))
         {
             decompressorStream.CopyTo(fileStream);
         }
-
-        Assembly.LoadFrom(tempFilePath);
     }
+    
+    private void DllCallOnStartup(object instance, UIControlledApplication application)
+    {
+        var type = instance.GetType();
+        
+        var onStartupMethod = type.GetMethod("OnStartup");
+        if (onStartupMethod != null)
+        {
+            onStartupMethod.Invoke(instance, [application]);
+        }
+    }
+    
+    private void DllCallOnShutdown(object instance, UIControlledApplication application)
+    {
+        var type = instance.GetType();
+        
+        var onShutdownMethod = type.GetMethod("OnShutdown");
+        if (onShutdownMethod != null)
+        {
+            onShutdownMethod.Invoke(instance, [application]);
+        }
+    }
+    
 }
