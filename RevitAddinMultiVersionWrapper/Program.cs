@@ -17,26 +17,67 @@ class App : IExternalApplication
     
     public Result OnStartup(UIControlledApplication application)
     {
-
         var assembly = Assembly.GetExecutingAssembly();
         var version = DllVersion(application);
-        
-        DecompressDll(assembly, version, TempFilePath);
-        
-        _dllAppDomain = AppDomain.CreateDomain("RevitAddinMultiVersion");
-        var assemblyName = AssemblyName.GetAssemblyName(TempFilePath).FullName;
-        
-        _dllInstance = _dllAppDomain.CreateInstanceAndUnwrap(assemblyName, RevitAppClass);
-        if (_dllInstance == null)
+
+        try
         {
+            DecompressDll(assembly, version, TempFilePath);
+        }
+        catch (Exception ex)
+        {
+            TaskDialog.Show("Decompression Error", ex.ToString());
             return Result.Failed;
         }
-        
-        DllCallOnStartup(_dllInstance, application);
-        
+
+        if (!File.Exists(TempFilePath))
+        {
+            TaskDialog.Show("Error", $"DLL not found at {TempFilePath}");
+            return Result.Failed;
+        }
+
+        var appDomainSetup = new AppDomainSetup
+        {
+            ApplicationBase = Path.GetDirectoryName(TempFilePath)
+        };
+
+        _dllAppDomain = AppDomain.CreateDomain("RevitAddinMultiVersion", null, appDomainSetup);
+
+        var assemblyName = AssemblyName.GetAssemblyName(TempFilePath).FullName;
+        TaskDialog.Show("Assembly Name", assemblyName);
+
+        try
+        {
+            _dllInstance = _dllAppDomain.CreateInstanceAndUnwrap(
+                assemblyName,
+                RevitAppClass
+            );
+        }
+        catch (Exception ex)
+        {
+            TaskDialog.Show("CreateInstance Error", ex.ToString());
+            return Result.Failed;
+        }
+
+        if (_dllInstance == null)
+        {
+            TaskDialog.Show("Error", "Failed to create instance of the add-in class.");
+            return Result.Failed;
+        }
+
+        try
+        {
+            DllCallOnStartup(_dllInstance, application);
+        }
+        catch (Exception ex)
+        {
+            TaskDialog.Show("OnStartup Error", ex.ToString());
+            return Result.Failed;
+        }
+
         return Result.Succeeded;
     }
-
+    
     public Result OnShutdown(UIControlledApplication application)
     {
         
@@ -82,8 +123,8 @@ class App : IExternalApplication
     {
         var dllName = $"RevitAddinMultiVersion{version}.zstd";
 
-        using (var stream = assembly.GetManifestResourceStream($"RevitAddinMultiVersionWrapper.Resources.{dllName}"))
-        using (var decompressorStream = new DecompressionStream(stream))
+        using var stream = assembly.GetManifestResourceStream($"RevitAddinMultiVersionWrapper.Resources.{dllName}");
+        using var decompressorStream = new DecompressionStream(stream);
         using (var fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write))
         {
             decompressorStream.CopyTo(fileStream);
