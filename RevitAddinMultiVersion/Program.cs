@@ -1,4 +1,6 @@
-﻿using Autodesk.Revit.UI;
+﻿namespace RevitAddinMultiVersion;
+
+using Autodesk.Revit.UI;
 
 class App : IExternalApplication
 {

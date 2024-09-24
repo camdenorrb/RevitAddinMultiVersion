@@ -44,7 +44,6 @@ class App : IExternalApplication
         _dllAppDomain = AppDomain.CreateDomain("RevitAddinMultiVersion", null, appDomainSetup);
 
         var assemblyName = AssemblyName.GetAssemblyName(TempFilePath).FullName;
-        TaskDialog.Show("Assembly Name", assemblyName);
 
         try
         {
