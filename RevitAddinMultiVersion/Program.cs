@@ -2,7 +2,7 @@
 
 using Autodesk.Revit.UI;
 
-class App : IExternalApplication
+internal class App : IExternalApplication
 {
     public Result OnStartup(UIControlledApplication application)
     {

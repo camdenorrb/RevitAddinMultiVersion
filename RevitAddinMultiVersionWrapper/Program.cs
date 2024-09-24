@@ -4,7 +4,7 @@ using System.Reflection;
 using Autodesk.Revit.UI;
 using ZstdSharp;
 
-class App : IExternalApplication
+internal class App : IExternalApplication
 {
 
     private const string RevitAppClass = "RevitAddinMultiVersion.App";
@@ -12,17 +12,17 @@ class App : IExternalApplication
     
     private IExternalApplication? _dllInstance;
 
-    private string? TempFilePath;
+    private string? _tempFilePath;
     
     public Result OnStartup(UIControlledApplication application)
     {
         var assembly = Assembly.GetExecutingAssembly();
         var version = DllVersion(application);
 
-        TempFilePath = Path.Combine(Path.GetTempPath(), $"RevitAddinMultiVersion{version}.dll");
+        _tempFilePath = Path.Combine(Path.GetTempPath(), $"RevitAddinMultiVersion{version}.dll");
         try
         {
-            DecompressDll(assembly, version, TempFilePath);
+            DecompressDll(assembly, version, _tempFilePath);
         }
         catch (Exception ex)
         {
@@ -30,13 +30,13 @@ class App : IExternalApplication
             return Result.Failed;
         }
 
-        if (!File.Exists(TempFilePath))
+        if (!File.Exists(_tempFilePath))
         {
-            TaskDialog.Show("Error", $"DLL not found at {TempFilePath}");
+            TaskDialog.Show("Error", $"DLL not found at {_tempFilePath}");
             return Result.Failed;
         }
         
-        _dllInstance = Assembly.LoadFrom(TempFilePath)
+        _dllInstance = Assembly.LoadFrom(_tempFilePath)
             .CreateInstance(RevitAppClass) as IExternalApplication;
 
         if (_dllInstance == null)
@@ -71,7 +71,7 @@ class App : IExternalApplication
        return Result.Succeeded;
     }
 
-    public string DllVersion(UIControlledApplication application)
+    private string DllVersion(UIControlledApplication application)
     {
         return application.ControlledApplication.VersionNumber switch
         {
@@ -91,7 +91,7 @@ class App : IExternalApplication
         };
     }
     
-    private void DecompressDll(Assembly assembly, string version, string tempFilePath)
+    private static void DecompressDll(Assembly assembly, string version, string tempFilePath)
     {
         var dllName = $"RevitAddinMultiVersion{version}.zstd";
 
@@ -101,46 +101,6 @@ class App : IExternalApplication
         {
             decompressorStream.CopyTo(fileStream);
         }
-    }
-    
-    private Assembly DllAppDomain_AssemblyResolve(object sender, ResolveEventArgs args)
-    {
-        // First, check if the assembly is already loaded in the default AppDomain
-        var loadedAssembly = AppDomain.CurrentDomain.GetAssemblies()
-            .FirstOrDefault(a => a.FullName == args.Name);
-
-        if (loadedAssembly != null)
-        {
-            // Load the assembly bytes into the new AppDomain
-            var assemblyPath = loadedAssembly.Location;
-            return Assembly.LoadFrom(assemblyPath);
-        }
-
-        // Attempt to load the assembly from Revit's installation directory
-        var assemblyName = new AssemblyName(args.Name).Name + ".dll";
-
-        // Attempt to load the assembly from the add-in's directory
-        var addinAssemblyPath = Path.Combine(
-            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-            assemblyName);
-
-        if (File.Exists(addinAssemblyPath))
-        {
-            return Assembly.LoadFrom(addinAssemblyPath);
-        }
-
-        // Attempt to load the assembly from the temporary directory where the decompressed DLL is
-        var tempAssemblyPath = Path.Combine(
-            Path.GetDirectoryName(TempFilePath),
-            assemblyName);
-
-        if (File.Exists(tempAssemblyPath))
-        {
-            return Assembly.LoadFrom(tempAssemblyPath);
-        }
-
-        // If the assembly cannot be found, return null
-        return null;
     }
     
 }
