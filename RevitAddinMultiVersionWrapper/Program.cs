@@ -34,7 +34,7 @@ class App : IExternalApplication
         
         var assemblyName = AssemblyName.GetAssemblyName(TempFilePath);
         
-        _dllInstance = _dllAppDomain.CreateInstanceAndUnwrap(assemblyName.FullName, RevitAppClass);
+        _dllInstance = _dllAppDomain.CreateInstanceAndUnwrap(TempFilePath, RevitAppClass);
         if (_dllInstance == null)
         {
             return Result.Failed;
