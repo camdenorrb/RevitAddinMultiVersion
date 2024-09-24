@@ -38,10 +38,11 @@ class App : IExternalApplication
 
         var appDomainSetup = new AppDomainSetup
         {
-            ApplicationBase = Path.GetDirectoryName(TempFilePath)
+            ApplicationBase = Path.GetDirectoryName(TempFilePath),
         };
 
         _dllAppDomain = AppDomain.CreateDomain("RevitAddinMultiVersion", null, appDomainSetup);
+        _dllAppDomain.AssemblyResolve += DllAppDomain_AssemblyResolve;
 
         var assemblyName = AssemblyName.GetAssemblyName(TempFilePath).FullName;
 
@@ -150,6 +151,23 @@ class App : IExternalApplication
         {
             onShutdownMethod.Invoke(instance, [application]);
         }
+    }
+    
+    private Assembly? DllAppDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+    {
+        // Check if the requested assembly is RevitAPI or RevitAPIUI
+        if (args.Name.StartsWith("RevitAPI"))
+        {
+            // Load the assembly from the default AppDomain
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(a => a.FullName == args.Name);
+            if (assembly != null)
+            {
+                return assembly;
+            }
+        }
+
+        return null;
     }
     
 }
