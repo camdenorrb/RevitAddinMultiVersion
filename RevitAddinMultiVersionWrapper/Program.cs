@@ -11,7 +11,7 @@ class App : MarshalByRefObject, IExternalApplication
     private const string RevitAppClass = "RevitAddinMultiVersion.App";
     private const string DefaultVersion = "R25";
     
-    private AppDomain? _dllAppDomain;
+    //private AppDomain? _dllAppDomain;
     private IExternalApplication? _dllInstance;
     
     private static readonly string TempFilePath = Path.Combine(Path.GetTempPath(), "RevitAddinMultiVersion.dll");
@@ -46,9 +46,10 @@ class App : MarshalByRefObject, IExternalApplication
             ConfigurationFile = currentSetup.ConfigurationFile
         };
         
-        _dllAppDomain = AppDomain.CreateDomain("RevitAddinMultiVersion", null, appDomainSetup);
-        _dllAppDomain.AssemblyResolve += DllAppDomain_AssemblyResolve;
+        //_dllAppDomain = AppDomain.CreateDomain("RevitAddinMultiVersion", null, appDomainSetup);
+        //_dllAppDomain.AssemblyResolve += DllAppDomain_AssemblyResolve;
 
+        /*
         var assemblyName = AssemblyName.GetAssemblyName(TempFilePath).FullName;
 
         try
@@ -62,7 +63,10 @@ class App : MarshalByRefObject, IExternalApplication
         {
             TaskDialog.Show("CreateInstance Error", ex.ToString());
             return Result.Failed;
-        }
+        }*/
+        
+        _dllInstance = Assembly.LoadFrom(TempFilePath)
+            .CreateInstance(RevitAppClass) as IExternalApplication;
 
         if (_dllInstance == null)
         {
@@ -87,10 +91,11 @@ class App : MarshalByRefObject, IExternalApplication
     {
         _dllInstance?.OnShutdown(application);
 
+        /*
        if (_dllAppDomain != null)
        {
            AppDomain.Unload(_dllAppDomain);
-       }
+       }*/
         
        if (File.Exists(TempFilePath))
        {
