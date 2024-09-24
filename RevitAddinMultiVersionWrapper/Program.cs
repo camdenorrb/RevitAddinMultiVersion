@@ -4,6 +4,7 @@ using System.Reflection;
 using Autodesk.Revit.UI;
 using ZstdSharp;
 
+[Serializable]
 class App : IExternalApplication
 {
 
