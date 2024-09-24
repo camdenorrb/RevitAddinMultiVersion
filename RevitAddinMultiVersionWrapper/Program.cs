@@ -19,7 +19,7 @@ class App : IExternalApplication
     {
 
         var assembly = Assembly.GetExecutingAssembly();
-        var version = dllVersion(application);
+        var version = DllVersion(application);
         
         DecompressDll(assembly, version, TempFilePath);
         
@@ -28,7 +28,7 @@ class App : IExternalApplication
         
         _dllAppDomain.Load(assemblyName);
         
-        _dllInstance = _dllAppDomain.CreateInstanceAndUnwrap(assemblyName.FullName, RevitAppClass);
+        _dllInstance = _dllAppDomain.CreateInstanceAndUnwrap(TempFilePath, RevitAppClass);
         if (_dllInstance == null)
         {
             return Result.Failed;
@@ -60,7 +60,7 @@ class App : IExternalApplication
        return Result.Succeeded;
     }
 
-    public string dllVersion(UIControlledApplication application)
+    public string DllVersion(UIControlledApplication application)
     {
         return application.ControlledApplication.VersionNumber switch
         {
