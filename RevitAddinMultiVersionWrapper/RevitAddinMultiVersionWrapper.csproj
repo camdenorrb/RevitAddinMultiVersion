@@ -13,10 +13,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Resources\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <None Remove="Resources\RevitAddinMultiVersionR14.zstd" />
       <EmbeddedResource Include="Resources\RevitAddinMultiVersionR14.zstd">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -63,6 +59,10 @@
       </EmbeddedResource>
       <None Remove="Resources\RevitAddinMultiVersionR25.zstd" />
       <EmbeddedResource Include="Resources\RevitAddinMultiVersionR25.zstd">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </EmbeddedResource>
+      <None Remove="Resources\ZstdSharp.dll" />
+      <EmbeddedResource Include="Resources\ZstdSharp.dll">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
     </ItemGroup>

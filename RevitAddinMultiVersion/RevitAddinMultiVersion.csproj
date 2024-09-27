@@ -20,13 +20,17 @@
         
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
-        <TargetFramework>net8.0</TargetFramework> <!-- Default .NET Framework -->
+        
+        <TargetFramework>net48</TargetFramework> <!-- Default .NET Framework -->
+        <DefineConstants>REVIT2022;WINFORMS</DefineConstants> <!-- Change based on default .net framework -->
+        <RevitVersion>2022</RevitVersion>
 
         <Configurations>Debug R14;Debug R15;Debug R16;Debug R17;Debug R18;Debug R19;Debug R20;Debug R21;Debug R22;Debug R23;Debug R24;Debug R25</Configurations>
         <Configurations>$(Configurations);Release R14;Release R15;Release R16;Release R17;Release R18;Release R19;Release R20;Release R21;Release R22;Release R23;Release R24;Release R25</Configurations>
         
     </PropertyGroup>
 
+    
     <PropertyGroup Condition="$(Configuration.Contains('R14'))">
         <RevitVersion>2014</RevitVersion>
         <TargetFramework>net40</TargetFramework>

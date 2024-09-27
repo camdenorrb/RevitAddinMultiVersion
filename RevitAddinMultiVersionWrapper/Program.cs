@@ -2,13 +2,13 @@
 
 using System.Reflection;
 using Autodesk.Revit.UI;
-using ZstdSharp;
 
 internal class App : IExternalApplication
 {
 
     private const string RevitAppClass = "RevitAddinMultiVersion.App";
     private const string DefaultVersion = "R25";
+    private const string DllName = "RevitAddinMultiVersion";
     
     private IExternalApplication? _dllInstance;
 
@@ -18,8 +18,10 @@ internal class App : IExternalApplication
     {
         var assembly = Assembly.GetExecutingAssembly();
         var version = DllVersion(application);
+        
+        LoadZstdSharp();
 
-        _tempFilePath = Path.Combine(Path.GetTempPath(), $"RevitAddinMultiVersion{version}.dll");
+        _tempFilePath = Path.Combine(Path.GetTempPath(), $"{DllName}{version}.dll");
         try
         {
             DecompressDll(assembly, version, _tempFilePath);
@@ -61,14 +63,13 @@ internal class App : IExternalApplication
     public Result OnShutdown(UIControlledApplication application)
     {
         _dllInstance?.OnShutdown(application);
-        
         /*
        if (File.Exists(TempFilePath))
        {
            File.Delete(TempFilePath);
        }*/
 
-       return Result.Succeeded;
+        return Result.Succeeded;
     }
 
     private string DllVersion(UIControlledApplication application)
@@ -91,15 +92,61 @@ internal class App : IExternalApplication
         };
     }
     
+    
+    private static void LoadZstdSharp()
+    {
+        
+        var zstdDllFilePath = Path.Combine(Path.GetTempPath(), "${WrapperZstdSharp.dll");
+        
+        using var stream = Assembly.GetExecutingAssembly()
+            .GetManifestResourceStream($"{typeof(App).Namespace}.Resources.ZstdSharp.dll");
+        if (stream == null)
+        {
+            throw new InvalidOperationException("ZstdSharp.dll not found in resources.");
+        }
+            
+        using var fileStream = new FileStream(zstdDllFilePath, FileMode.Create, FileAccess.Write);
+            
+        stream.CopyTo(fileStream);
+        Assembly.LoadFrom(zstdDllFilePath);
+    }
+    
     private static void DecompressDll(Assembly assembly, string version, string tempFilePath)
     {
-        var dllName = $"RevitAddinMultiVersion{version}.zstd";
+        
+        var dllName = $"{DllName}{version}.zstd";
 
-        using var stream = assembly.GetManifestResourceStream($"RevitAddinMultiVersionWrapper.Resources.{dllName}");
-        using var decompressorStream = new DecompressionStream(stream);
-        using (var fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write))
+        // Load ZstdSharp via reflection
+        var zstdAssembly = Assembly.Load("ZstdSharp");
+        var decompressionStreamType = zstdAssembly.GetType("ZstdSharp.DecompressionStream");
+        if (decompressionStreamType == null)
         {
-            decompressorStream.CopyTo(fileStream);
+            throw new InvalidOperationException("ZstdSharp.DecompressionStream type not found.");
+        }
+        
+        // Create instance of ZstdSharp.DecompressionStream
+        var decompressionStreamConstructor = decompressionStreamType.GetConstructor([typeof(Stream)]);
+        if (decompressionStreamConstructor == null)
+        {
+            throw new InvalidOperationException("No suitable constructor for ZstdSharp.DecompressionStream.");
+        }
+        
+        using var stream = assembly.GetManifestResourceStream($"{typeof(App).Namespace}.Resources.{dllName}"); 
+        var decompressorStream = decompressionStreamConstructor.Invoke([stream]);
+        using var fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write);
+        
+        var copyToMethod = decompressionStreamType.GetMethod("CopyTo", [typeof(Stream)]);
+        if (copyToMethod == null)
+        {
+            throw new InvalidOperationException("CopyTo method not found on ZstdSharp.DecompressionStream.");
+        }
+        
+        copyToMethod.Invoke(decompressorStream, [fileStream]);
+        
+        // Dispose of the decompression stream properly (if IDisposable)
+        if (decompressorStream is IDisposable disposable) 
+        {
+            disposable.Dispose();
         }
     }
     
