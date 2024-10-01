@@ -31,7 +31,21 @@ internal class App : IExternalApplication
         var version = DllVersion(application);
         
         LoadZstdSharp();
-
+        
+        string exePath = Path.Combine(Path.GetTempPath(), "zstdWrapperGO.exe");  
+        ExtractResource( "GPSrvtTab.Resources.zstdWrapperGO.exe", exePath);
+            
+        Process process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                Arguments = "-d",
+                FileName = exePath,
+                UseShellExecute = false,
+                CreateNoWindow = true // Set to false if you want to see the console window
+            }
+        };
+        
         _tempFilePath = Path.Combine(Path.GetTempPath(), $"{DllName}{version}.dll");
         try
         {
