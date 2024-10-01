@@ -8,7 +8,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Autodesk.Revit.SDK" Version="2014.0.0" />
+      <PackageReference Include="Autodesk.Revit.SDK" Version="2014.0.0">
+        <ExcludeAssets>runtime</ExcludeAssets>
+      </PackageReference>
+      <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.34.2">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
       <PackageReference Include="ZstdSharp.Port" Version="0.8.1" />
     </ItemGroup>
 
@@ -67,4 +73,19 @@
       </EmbeddedResource>
     </ItemGroup>
 
+  <Target Name="ILRepacker" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    
+    <ItemGroup>
+      <InputAssemblies Include="$(OutputPath)\ZstdSharp.dll" />
+    </ItemGroup>
+    
+    <ILRepack
+            Parallel="true"
+            Internalize="true"
+            Union="true"
+            InputAssemblies="@(InputAssemblies)"
+            TargetKind="Dll"
+            OutputFile="$(OutputPath)\$(AssemblyName).dll"
+    />
+  </Target>
 </Project>

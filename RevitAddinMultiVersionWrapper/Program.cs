@@ -1,11 +1,12 @@
-﻿namespace RevitAddinMultiVersionWrapper;
+﻿using System.Diagnostics;
+
+namespace RevitAddinMultiVersionWrapper;
 
 using System.Reflection;
 using Autodesk.Revit.UI;
 
 internal class App : IExternalApplication
 {
-
     private const string RevitAppClass = "RevitAddinMultiVersion.App";
     private const string DefaultVersion = "R25";
     private const string DllName = "RevitAddinMultiVersion";
@@ -13,7 +14,17 @@ internal class App : IExternalApplication
     private IExternalApplication? _dllInstance;
 
     private string? _tempFilePath;
+    private Assembly? _zstdAssembly;
     
+    void ExtractResource( string resource, string path )
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        Stream? stream = assembly.GetManifestResourceStream( resource );
+        byte[] bytes = new byte[(int)stream.Length];
+        stream.Read( bytes, 0, bytes.Length );
+        File.WriteAllBytes( path, bytes);
+    }
+
     public Result OnStartup(UIControlledApplication application)
     {
         var assembly = Assembly.GetExecutingAssembly();
@@ -63,11 +74,35 @@ internal class App : IExternalApplication
     public Result OnShutdown(UIControlledApplication application)
     {
         _dllInstance?.OnShutdown(application);
-        /*
-       if (File.Exists(TempFilePath))
-       {
-           File.Delete(TempFilePath);
-       }*/
+        
+        string exePath = Path.Combine(Path.GetTempPath(), "GPSdllMover.exe");  
+        ExtractResource( "GPSrvtTab.Resources.GPSrvtTabDLLMover.exe", exePath );
+            
+        Process process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                    
+                Arguments = "-",
+                    
+                FileName = exePath,
+                UseShellExecute = false,
+                CreateNoWindow = true // Set to false if you want to see the console window
+            }
+        };
+            
+        try
+        {
+            process.Start();
+            process.WaitForExit();
+        }
+        finally
+        {
+            if (File.Exists(exePath))
+            {
+                File.Delete(exePath);
+            }
+        }
 
         return Result.Succeeded;
     }
@@ -93,10 +128,12 @@ internal class App : IExternalApplication
     }
     
     
-    private static void LoadZstdSharp()
+    
+    
+    private void LoadZstdSharp()
     {
         
-        var zstdDllFilePath = Path.Combine(Path.GetTempPath(), "${WrapperZstdSharp.dll");
+        var zstdDllFilePath = Path.Combine(Path.GetTempPath(), "WrapperZstdSharp.dll");
         
         using var stream = Assembly.GetExecutingAssembly()
             .GetManifestResourceStream($"{typeof(App).Namespace}.Resources.ZstdSharp.dll");
@@ -108,17 +145,21 @@ internal class App : IExternalApplication
         using var fileStream = new FileStream(zstdDllFilePath, FileMode.Create, FileAccess.Write);
             
         stream.CopyTo(fileStream);
-        Assembly.LoadFrom(zstdDllFilePath);
+        _zstdAssembly = Assembly.LoadFrom(zstdDllFilePath);
     }
     
-    private static void DecompressDll(Assembly assembly, string version, string tempFilePath)
+    private void DecompressDll(Assembly assembly, string version, string tempFilePath)
     {
         
         var dllName = $"{DllName}{version}.zstd";
 
-        // Load ZstdSharp via reflection
-        var zstdAssembly = Assembly.Load("ZstdSharp");
-        var decompressionStreamType = zstdAssembly.GetType("ZstdSharp.DecompressionStream");
+        if (_zstdAssembly == null)
+        {
+            TaskDialog.Show("Error", "ZstdSharp assembly not loaded.");
+            throw new InvalidOperationException("ZstdSharp assembly not loaded.");
+        }
+        
+        var decompressionStreamType = _zstdAssembly.GetType("ZstdSharp.DecompressionStream");
         if (decompressionStreamType == null)
         {
             throw new InvalidOperationException("ZstdSharp.DecompressionStream type not found.");
