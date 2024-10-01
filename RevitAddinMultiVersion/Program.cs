@@ -1,16 +1,13 @@
-﻿using Autodesk.Revit.DB;
-using Autodesk.Revit.UI.Selection;
-
-namespace RevitAddinMultiVersion;
+﻿namespace RevitAddinMultiVersion;
 
 using Autodesk.Revit.UI;
 
 internal class App : IExternalApplication
 {
     public Result OnStartup(UIControlledApplication application)
-    { 
-            TaskDialog.Show("Remember, I'm always watching >:3", "MultiVersion:" + GetVersion()); 
-            return Result.Succeeded;
+    {
+        TaskDialog.Show("Remember, I'm always watching >:3", "MultiVersion:" + GetVersion());
+        return Result.Succeeded;
     }
 
     public Result OnShutdown(UIControlledApplication application)

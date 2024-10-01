@@ -28,4 +28,4 @@ $RECYCLE.BIN/
 bin/
 obj/
 
-!Resources/main.exe
+!Resources/zstdWrapperGO.exe

@@ -18,9 +18,9 @@ internal class App : IExternalApplication
         var assembly = Assembly.GetExecutingAssembly();
         var version = DllVersion(application);
         
-        var dllName = $"{DllName}{version}.dll";
+        var dllName = $"{DllName}{version}";
         var tempFolderPath = Path.GetTempPath();
-        var dllOutPath = Path.Combine(tempFolderPath, dllName);
+        var dllOutPath = Path.Combine(tempFolderPath, dllName + ".dll");
 
         string exePath;
         
@@ -104,8 +104,7 @@ internal class App : IExternalApplication
             _ => DefaultVersion
         };
     }
-
-    private string ExtractExe(string tempFolderPath, string exeName)
+private string ExtractExe(string tempFolderPath, string exeName)
     {
         var exePath = Path.Combine(tempFolderPath, exeName);
         
@@ -134,15 +133,15 @@ internal class App : IExternalApplication
             throw new InvalidOperationException($"Resource {dllName}.zst not found.");
         }
         
-        using var fileStream = new FileStream(dllZstdFilePath, FileMode.Create, FileAccess.Write);
-
-        stream.CopyTo(fileStream);
+        using (var fileStream = new FileStream(dllZstdFilePath, FileMode.Create, FileAccess.Write)) {
+            stream.CopyTo(fileStream);
+        }
         
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                Arguments = $"-decompress -in={dllZstdFilePath} -out={dllOutPath}",
+                Arguments = $"-decompress -in=\"{dllZstdFilePath}\" -out=\"{dllOutPath}\"",
                 FileName = zstdExePath,
                 UseShellExecute = false,
                 CreateNoWindow = true
@@ -152,5 +151,4 @@ internal class App : IExternalApplication
         process.Start();
         process.WaitForExit();
     }
-    
 }

@@ -14,58 +14,54 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Resources\RevitAddinMultiVersionR14.zstd" />
-      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR14.zstd">
+      <None Remove="Resources\zstdWrapperGO.exe" />
+      <EmbeddedResource Include="Resources\zstdWrapperGO.exe">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
-      <None Remove="Resources\RevitAddinMultiVersionR15.zstd" />
-      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR15.zstd">
+      <None Remove="Resources\RevitAddinMultiVersionR14.zst" />
+      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR14.zst">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
-      <None Remove="Resources\RevitAddinMultiVersionR16.zstd" />
-      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR16.zstd">
+      <None Remove="Resources\RevitAddinMultiVersionR15.zst" />
+      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR15.zst">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
-      <None Remove="Resources\RevitAddinMultiVersionR17.zstd" />
-      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR17.zstd">
+      <None Remove="Resources\RevitAddinMultiVersionR16.zst" />
+      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR16.zst">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
-      <None Remove="Resources\RevitAddinMultiVersionR18.zstd" />
-      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR18.zstd">
+      <None Remove="Resources\RevitAddinMultiVersionR17.zst" />
+      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR17.zst">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
-      <None Remove="Resources\RevitAddinMultiVersionR19.zstd" />
-      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR19.zstd">
+      <None Remove="Resources\RevitAddinMultiVersionR18.zst" />
+      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR18.zst">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
-      <None Remove="Resources\RevitAddinMultiVersionR20.zstd" />
-      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR20.zstd">
+      <None Remove="Resources\RevitAddinMultiVersionR19.zst" />
+      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR19.zst">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
-      <None Remove="Resources\RevitAddinMultiVersionR21.zstd" />
-      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR21.zstd">
+      <None Remove="Resources\RevitAddinMultiVersionR20.zst" />
+      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR20.zst">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
-      <None Remove="Resources\RevitAddinMultiVersionR22.zstd" />
-      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR22.zstd">
+      <None Remove="Resources\RevitAddinMultiVersionR21.zst" />
+      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR21.zst">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
-      <None Remove="Resources\RevitAddinMultiVersionR23.zstd" />
-      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR23.zstd">
+      <None Remove="Resources\RevitAddinMultiVersionR22.zst" />
+      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR22.zst">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
-      <None Remove="Resources\RevitAddinMultiVersionR24.zstd" />
-      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR24.zstd">
+      <None Remove="Resources\RevitAddinMultiVersionR23.zst" />
+      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR23.zst">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
-      <None Remove="Resources\RevitAddinMultiVersionR25.zstd" />
-      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR25.zstd">
+      <None Remove="Resources\RevitAddinMultiVersionR24.zst" />
+      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR24.zst">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
-      <None Remove="Resources\ZstdSharp.dll" />
-      <None Remove="Resources\main.exe" />
-      <EmbeddedResource Include="Resources\main.exe">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </EmbeddedResource>
+      <None Remove="Resources\RevitAddinMultiVersionR25.zst" />
     </ItemGroup>
 </Project>
