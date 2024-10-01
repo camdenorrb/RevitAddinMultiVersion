@@ -36,7 +36,7 @@ internal class App : IExternalApplication
 
         try
         {
-            DecompressDll(assembly, exePath, tempFolderPath, dllOutPath, dllName);
+            DecompressDll(assembly, exePath, dllOutPath, dllName);
         }
         catch (Exception ex)
         {
@@ -122,7 +122,7 @@ internal class App : IExternalApplication
         return exePath;
     }
     
-    private void DecompressDll(Assembly assembly, string zstdExePath, string tempFolderPath, string dllOutPath, string dllName)
+    private void DecompressDll(Assembly assembly, string zstdExePath, string dllOutPath, string dllName)
     {
         
         var dllZstdFilePath = dllOutPath + ".zst";
