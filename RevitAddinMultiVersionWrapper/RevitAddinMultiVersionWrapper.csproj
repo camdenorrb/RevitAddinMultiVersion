@@ -68,7 +68,8 @@
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
       <None Remove="Resources\ZstdSharp.dll" />
-      <EmbeddedResource Include="Resources\ZstdSharp.dll">
+      <None Remove="Resources\main.exe" />
+      <EmbeddedResource Include="Resources\main.exe">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
     </ItemGroup>

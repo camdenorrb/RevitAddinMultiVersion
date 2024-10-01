@@ -12,58 +12,52 @@ internal class App : IExternalApplication
     private const string DllName = "RevitAddinMultiVersion";
     
     private IExternalApplication? _dllInstance;
-
-    private string? _tempFilePath;
-    private Assembly? _zstdAssembly;
     
-    void ExtractResource( string resource, string path )
-    {
-        var assembly = Assembly.GetExecutingAssembly();
-        Stream? stream = assembly.GetManifestResourceStream( resource );
-        byte[] bytes = new byte[(int)stream.Length];
-        stream.Read( bytes, 0, bytes.Length );
-        File.WriteAllBytes( path, bytes);
-    }
-
     public Result OnStartup(UIControlledApplication application)
     {
         var assembly = Assembly.GetExecutingAssembly();
         var version = DllVersion(application);
         
-        LoadZstdSharp();
+        var dllName = $"{DllName}{version}.dll";
+        var tempFolderPath = Path.GetTempPath();
+        var dllOutPath = Path.Combine(tempFolderPath, dllName);
+
+        string exePath;
         
-        string exePath = Path.Combine(Path.GetTempPath(), "zstdWrapperGO.exe");  
-        ExtractResource( "GPSrvtTab.Resources.zstdWrapperGO.exe", exePath);
-            
-        Process process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                Arguments = "-d",
-                FileName = exePath,
-                UseShellExecute = false,
-                CreateNoWindow = true // Set to false if you want to see the console window
-            }
-        };
-        
-        _tempFilePath = Path.Combine(Path.GetTempPath(), $"{DllName}{version}.dll");
         try
         {
-            DecompressDll(assembly, version, _tempFilePath);
+            exePath = ExtractExe(tempFolderPath, "zstdWrapperGO.exe");
+        }
+        catch (Exception ex)
+        {
+            TaskDialog.Show("Extraction Error", ex.ToString());
+            return Result.Failed;
+        }
+
+        try
+        {
+            DecompressDll(assembly, exePath, tempFolderPath, dllOutPath, dllName);
         }
         catch (Exception ex)
         {
             TaskDialog.Show("Decompression Error", ex.ToString());
             return Result.Failed;
         }
-
-        if (!File.Exists(_tempFilePath))
+        finally
         {
-            TaskDialog.Show("Error", $"DLL not found at {_tempFilePath}");
+            if (File.Exists(exePath))
+            {
+                File.Delete(exePath);
+            }
+        }
+
+        if (!File.Exists(dllOutPath))
+        {
+            TaskDialog.Show("Error", $"DLL not found at {dllOutPath}");
             return Result.Failed;
         }
         
-        _dllInstance = Assembly.LoadFrom(_tempFilePath)
+        _dllInstance = Assembly.LoadFrom(dllOutPath)
             .CreateInstance(RevitAppClass) as IExternalApplication;
 
         if (_dllInstance == null)
@@ -88,36 +82,6 @@ internal class App : IExternalApplication
     public Result OnShutdown(UIControlledApplication application)
     {
         _dllInstance?.OnShutdown(application);
-        
-        string exePath = Path.Combine(Path.GetTempPath(), "GPSdllMover.exe");  
-        ExtractResource( "GPSrvtTab.Resources.GPSrvtTabDLLMover.exe", exePath );
-            
-        Process process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                    
-                Arguments = "-",
-                    
-                FileName = exePath,
-                UseShellExecute = false,
-                CreateNoWindow = true // Set to false if you want to see the console window
-            }
-        };
-            
-        try
-        {
-            process.Start();
-            process.WaitForExit();
-        }
-        finally
-        {
-            if (File.Exists(exePath))
-            {
-                File.Delete(exePath);
-            }
-        }
-
         return Result.Succeeded;
     }
 
@@ -140,69 +104,53 @@ internal class App : IExternalApplication
             _ => DefaultVersion
         };
     }
-    
-    
-    
-    
-    private void LoadZstdSharp()
+
+    private string ExtractExe(string tempFolderPath, string exeName)
     {
+        var exePath = Path.Combine(tempFolderPath, exeName);
         
-        var zstdDllFilePath = Path.Combine(Path.GetTempPath(), "WrapperZstdSharp.dll");
-        
-        using var stream = Assembly.GetExecutingAssembly()
-            .GetManifestResourceStream($"{typeof(App).Namespace}.Resources.ZstdSharp.dll");
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"{typeof(App).Namespace}.Resources.{exeName}");
         if (stream == null)
         {
-            throw new InvalidOperationException("ZstdSharp.dll not found in resources.");
+            TaskDialog.Show("Error", $"Resource {exeName} not found.");
+            throw new InvalidOperationException($"Resource {exeName} not found.");
         }
-            
-        using var fileStream = new FileStream(zstdDllFilePath, FileMode.Create, FileAccess.Write);
-            
+        
+        using var fileStream = new FileStream(exePath, FileMode.Create, FileAccess.Write);
         stream.CopyTo(fileStream);
-        _zstdAssembly = Assembly.LoadFrom(zstdDllFilePath);
+        
+        return exePath;
     }
     
-    private void DecompressDll(Assembly assembly, string version, string tempFilePath)
+    private void DecompressDll(Assembly assembly, string zstdExePath, string tempFolderPath, string dllOutPath, string dllName)
     {
         
-        var dllName = $"{DllName}{version}.zstd";
+        var dllZstdFilePath = dllOutPath + ".zst";
+        
+        using var stream = assembly.GetManifestResourceStream($"{typeof(App).Namespace}.Resources.{dllName}.zst"); 
+        if (stream == null)
+        {
+            TaskDialog.Show("Error", $"Resource {dllName}.zst not found.");
+            throw new InvalidOperationException($"Resource {dllName}.zst not found.");
+        }
+        
+        using var fileStream = new FileStream(dllZstdFilePath, FileMode.Create, FileAccess.Write);
 
-        if (_zstdAssembly == null)
+        stream.CopyTo(fileStream);
+        
+        var process = new Process
         {
-            TaskDialog.Show("Error", "ZstdSharp assembly not loaded.");
-            throw new InvalidOperationException("ZstdSharp assembly not loaded.");
-        }
+            StartInfo = new ProcessStartInfo
+            {
+                Arguments = $"-decompress -in={dllZstdFilePath} -out={dllOutPath}",
+                FileName = zstdExePath,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            }
+        };
         
-        var decompressionStreamType = _zstdAssembly.GetType("ZstdSharp.DecompressionStream");
-        if (decompressionStreamType == null)
-        {
-            throw new InvalidOperationException("ZstdSharp.DecompressionStream type not found.");
-        }
-        
-        // Create instance of ZstdSharp.DecompressionStream
-        var decompressionStreamConstructor = decompressionStreamType.GetConstructor([typeof(Stream)]);
-        if (decompressionStreamConstructor == null)
-        {
-            throw new InvalidOperationException("No suitable constructor for ZstdSharp.DecompressionStream.");
-        }
-        
-        using var stream = assembly.GetManifestResourceStream($"{typeof(App).Namespace}.Resources.{dllName}"); 
-        var decompressorStream = decompressionStreamConstructor.Invoke([stream]);
-        using var fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write);
-        
-        var copyToMethod = decompressionStreamType.GetMethod("CopyTo", [typeof(Stream)]);
-        if (copyToMethod == null)
-        {
-            throw new InvalidOperationException("CopyTo method not found on ZstdSharp.DecompressionStream.");
-        }
-        
-        copyToMethod.Invoke(decompressorStream, [fileStream]);
-        
-        // Dispose of the decompression stream properly (if IDisposable)
-        if (decompressorStream is IDisposable disposable) 
-        {
-            disposable.Dispose();
-        }
+        process.Start();
+        process.WaitForExit();
     }
     
 }
