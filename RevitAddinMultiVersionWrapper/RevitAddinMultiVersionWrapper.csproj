@@ -63,5 +63,8 @@
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
       <None Remove="Resources\RevitAddinMultiVersionR25.zst" />
+      <EmbeddedResource Include="Resources\RevitAddinMultiVersionR25.zst">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </EmbeddedResource>
     </ItemGroup>
 </Project>
